@@ -1,0 +1,22 @@
+{
+  "name": "highpost_temp_backend",
+  "version": "1.0.0",
+  "description": "a tempory backend for highpost",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mysql2": "^1.6.5",
+    "sequelize": "^5.12.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js",
+    "start-server": "node app.js"
+  },
+  "author": "Yang",
+  "license": "ISC"
+}
