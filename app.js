@@ -17,6 +17,15 @@ const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.json());
 // app.use(express.static(path.join(__dirname, 'public')));
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'OPTIONS, GET, POST, PUT, PATCH, DELETE'
+  );
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 app.use('/admin', adminRoutes);
 app.use('/auth', authRoutes);
@@ -30,7 +39,7 @@ app.use((error, req, res, next) => {
 });
 
 Shipment.belongsTo(User, {constraints: true, onDelete: 'CASCADE' });
-User.hasMany(Shipment);
+User.hasMany(Shipment, {as: 'Shipments'});
 
 sequelize
   // .sync({ force: true }) //for developing purposes, will drop all the exiting table and recreate all the tables

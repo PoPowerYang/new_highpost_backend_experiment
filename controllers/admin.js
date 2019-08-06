@@ -1,22 +1,33 @@
-const path = require('path');
+const unique = require('uniqid');
 
 const { validationResult } = require('express-validator/check');
 
 const Shipment = require('../models/shipment');
+const User = require('../models/user');
 
 
 exports.getShipments = (req, res, next) => {
-    Shipment.findAll()
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        const error = new Error('Validation failed, entered data is incorrect.');
+        error.statusCode = 422;
+        throw error;
+    }
+    User.findByPk(req.userId)
+    .then(result => {
+        return result.getShipments();
+    })
     .then(shipments => {
-            console.log('Shipments retrieved');
-            res.status(200).json({
-                message: 'Shipments fetched successfully.',
-                shipments: shipments
-            });
-            // res.send(shipments); //this will send back a list of shipments data to the client
-        })
+        // res.send(shipment);
+        if(!shipments) {
+            const error = new Error('Could not find shipments');
+            error.statusCode = 404;
+            throw error;
+        }
+        res.status(200).json({ message:'Shipment found!', shipment: shipments });
+    })
     .catch(err => {
-        if(!err.statusCode) {
+        if (!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
@@ -25,17 +36,22 @@ exports.getShipments = (req, res, next) => {
 
 exports.getSingleShipment = (req, res, next) => {
     const shipId = req.params.shipmentId;
-    Shipment.findByPk(shipId)
+    const errors = validationResult(req);
+    if(!errors.isEmpty()) {
+        const error = new Error('Validation failed, entered data is incorrect.');
+        error.statusCode = 422;
+        throw error;
+    }
+    User.findByPk(req.userId)
+    .then(result => {
+       return result.getShipments({where: {id: shipId}});
+    })
     .then(shipment => {
-        if(!shipment) {
-            const error = new Error('Could not find shipment.');
-            error.statusCode = 404;
-            throw error;
-        }
-        res.status(200).json({ messgae: 'Shipment fetched.', shipment: shipment})
+        // res.send(shipment);
+        res.status(200).json({ message:'Shipment found!', shipment: shipment });
     })
     .catch(err => {
-        if(!err.statusCode) {
+        if (!err.statusCode) {
             err.statusCode = 500;
         }
         next(err);
@@ -54,18 +70,23 @@ exports.postAddShipment = (req, res, next) => {
     const recipient = req.body.recipient;
     const address = req.body.address;
     const description = req.body.description;
-    Shipment.create({
-        title: title,
-        sender: sender,
-        recipient: recipient,
-        address: address,
-        description: description
+    User.findByPk(req.userId)
+    .then(result => {
+        return result.createShipment({
+            id: unique(),
+            userId: req.userId,
+            title: title,
+            sender: sender,
+            recipient: recipient,
+            address: address,
+            description: description
+        });
     })
     .then(result => {
         res.status(201).json({
             message: 'Shipment created successfully!',
             shipment: result
-        });
+        })
     })
     .catch(err => {
         if (!err.statusCode) {
@@ -75,7 +96,7 @@ exports.postAddShipment = (req, res, next) => {
     });
 };
 
-exports.postUpdatedShipment = (req, res, next) => {
+exports.putUpdatedShipment = (req, res, next) => {
     const shipId = req.params.shipmentId;
     const errors = validationResult(req);
     if(!errors.isEmpty()) {
@@ -88,44 +109,47 @@ exports.postUpdatedShipment = (req, res, next) => {
     const updatedRecipient = req.body.recipient;
     const updatedAddress = req.body.address;
     const updatedDescription = req.body.description;
-    Shipment.findByPk(shipId)
-        .then(shipment => {
-            if(!shipment) {
-                const error = new Error('Could not find shipment');
-                error.statusCode = 404;
-                throw error;
-            }
-            shipment.title = updatedTitle,
-            shipment.sender = updatedender,
-            shipment.recipient = updatedRecipient,
-            shipment.address = updatedAddress,
-            shipment.description = updatedDescription
-            return shipment.save();
-        })
-        .then(result => {
-            res.status(200).json({ message:'Shipment updated!', shipment: result });
-        })
-        .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err);
-        });
+    User.findByPk(req.userId)
+    .then(result => {
+       return result.getShipments({where: {id: shipId}});
+    })
+    .then(shipment => {
+        // res.send(shipment);
+        if(!shipment[0]) {
+            const error = new Error('Could not find shipment');
+            error.statusCode = 404;
+            throw error;
+        }
+        shipment[0].title = updatedTitle,
+        shipment[0].sender = updatedender,
+        shipment[0].recipient = updatedRecipient,
+        shipment[0].address = updatedAddress,
+        shipment[0].description = updatedDescription
+        return shipment[0].save();
+    })
+    .then(result => {
+        res.status(200).json({ message:'Shipment updated!', shipment: result });
+    })
+    .catch(err => {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err);
+    });
 };
 
 exports.postDeletePShipment = (req, res, next) => {
     const shipId = req.params.shipmentId;
-    Shipment.findByPk(shipId)
-        .then(shipment => {
-            if(!shipment) {
-                const error = new Error('Could not find shipment');
-                error.statusCode = 404;
-                throw error;
-            }
-            return shipment.destroy();
+    User.findByPk(req.userId)
+        .then(result => {
+           return result.getShipments({ where: {id: shipId} });
+        })
+        .then(shipmentToBeDestroy => {
+            return shipmentToBeDestroy[0].destroy();
         })
         .then(result => {
             console.log("Successfully deleted");
+            console.log(result);
             res.status(200).json({ message: 'Deleted shipment.' });
         })
         .catch(err => {

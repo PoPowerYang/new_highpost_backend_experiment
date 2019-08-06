@@ -4,9 +4,7 @@ const sequelize = require('../util/database');
 
 const Shipment = sequelize.define('shipment', {
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        allowNull: false,
+        type: Sequelize.UUID,
         primaryKey: true,
     },
     title: Sequelize.STRING,
