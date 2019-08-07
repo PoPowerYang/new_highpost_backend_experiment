@@ -11,20 +11,22 @@ const User = sequelize.define('user', {
         type: Sequelize.STRING,
         require: true
     },
-    age: Sequelize.INTEGER,
     firstName: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    middleName: {
+        type: Sequelize.STRING,
+        allowNull: true
     },
     lastName: {
         type: Sequelize.STRING,
         allowNull: false
     },
-    address: {
+    email: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
     },
-    email: Sequelize.STRING,
     phone: Sequelize.STRING,
     // posts: Sequelize.ARRAY
 });
