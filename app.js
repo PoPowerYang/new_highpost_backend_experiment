@@ -6,28 +6,28 @@ const bodyParser = require('body-parser');
 const errorController = require('./controllers/error');
 const sequelize = require('./util/database');
 
-const Shipment = require('./models/shipment');
 const User = require('./models/user');
 const Addresses = require('./models/addresses');
-const Orders = require('./models/orders');
-const Components = require('./models/components');
-const Courier = require('./models/courier');
-const OrderState = require('./models/order-state');
-const ServiceType = require('./models/service-type');
+const Shipment = require('./models/shipment');
 const Route = require('./models/route');
-const Nodes = require('./models/nodes');
-const Contents = require('./models/contents');
-const Trip = require('./models/trip');
-const Coordinates = require('./models/coordinates');
+const PurchaseOrder = require('./models/purchase-order');
+const ServiceType = require('./models/service-type');
+const Module = require('./models/module');
+const location = require('./models/location');
+const Content = require('./models/contents');
+const Component = require('./models/components');
 const ManifestLocation = require('./models/manifest-location');
-const Heartbeat = require('./models/heartbeat');
-const orderStatus = require('./models/order-status');
+const Courier = require('./models/courier');
+const ShipmentState = require('./models/shipment-state');
+const ShipmentStatus = require('./models/shipment-status');
 const ShipmentAccess = require('./models/shipment-access');
-const Permissions = require('./models/permissions');
+const Permission = require('./models/permissions');
+const Heartbeat = require('./models/heartbeat');
 
 const app = express();
 
-const adminRoutes = require('./routes/admin');
+const shipmentRoutes = require('./routes/shipment-route');
+const utilRoutes = require('./routes/util-route');
 const authRoutes = require('./routes/auth');
 
 
@@ -47,8 +47,9 @@ app.use((req, res, next) => {
   updated at 8/7/2019
   by Yanwei Yang
 */
-app.use('/admin', adminRoutes);
+app.use('/shipment', shipmentRoutes);
 app.use('/auth', authRoutes);
+app.use('/util', utilRoutes);
 
 /*
   user for any error catch
@@ -71,37 +72,70 @@ app.use((error, req, res, next) => {
 
   updated at 8/7/2019
   by Yanwei Yang
-*/
-User.hasOne(Addresses, {as: 'Addresses'});
+*/ 
 
-Addresses.hasOne(Coordinates, {as: 'Coordinates'});
+User.belongsTo(Addresses);
 
-Shipment.hasMany(Nodes, {as: 'Nodes'});
+User.belongsToMany(Shipment, { through: 'UserShipment'});//This will add methods getUsers, setUsers, addUser,addUsers to Shipment
+Shipment.belongsToMany(User, { through: 'UserShipment'}); //This will add methods getShipments, setShipments, addShipment,adShipments to User
 
-Nodes.hasOne(ServiceType, {as: 'ServiceType'});
-Nodes.hasOne(Trip, {as: 'Trip'});
-Nodes.hasMany(Orders, {as: 'Orders'});
 
-Orders.hasOne(orderStatus, {as: 'OrderStatus'});
-Orders.hasOne(Contents, {as: 'Contents'});
-Orders.hasOne(Heartbeat, {as: 'Heartbeat'})
+Shipment.belongsTo(Route); //belongs to add getShipment, setShipment to Route model
+Route.hasOne(Shipment);
 
-orderStatus.hasOne(OrderState, {as: 'OrderState'});
-orderStatus.hasOne(Courier, {as: 'Courier'});
+Shipment.belongsTo(PurchaseOrder);
+PurchaseOrder.hasOne(Shipment);
 
-ManifestLocation.hasOne(Courier, {as: 'Courier'});
-ManifestLocation.hasOne(Coordinates, {as: 'Coordinates'});
+Shipment.belongsTo(ServiceType);
+ServiceType.hasOne(Shipment);
 
-Trip.hasOne(Addresses, {as: 'startAddress'});
-Trip.hasOne(Addresses, {as: 'endAddress'});
-Trip.hasOne(Route, {as: 'Route'});
+Shipment.belongsTo(Module);
+Module.hasOne(Shipment);
 
-ShipmentAccess.hasOne(Permissions, {as: 'Permission'});
-ShipmentAccess.hasOne(Orders, {as: 'Order'});
+location.hasOne(Addresses);
+Addresses.belongsTo(location);
+
+
+Route.belongsTo(Addresses, {as: 'startAddress'});
+Addresses.hasOne(Route, {as: 'startAddress'});
+
+Route.belongsTo(Addresses, {as: 'endAddress'});
+Addresses.hasOne(Route, {as: 'endAddress'});
+
+Content.belongsTo(Shipment);
+Shipment.hasOne(Content);
+
+Component.belongsTo(Module);
+Module.hasMany(Component, {as: 'Components'});
+
+ManifestLocation.belongsTo(location);
+location.hasOne(ManifestLocation);
+
+ManifestLocation.belongsTo(Courier);
+Courier.hasOne(ManifestLocation);
+
+ShipmentStatus.belongsTo(ShipmentState);
+ShipmentState.hasOne(ShipmentStatus);
+
+ShipmentStatus.belongsTo(Shipment);
+Shipment.hasOne(ShipmentStatus);
+
+ShipmentStatus.belongsTo(Courier);
+Courier.hasOne(ShipmentStatus);
+
+Shipment.hasOne(ShipmentAccess);
+ShipmentAccess.belongsTo(Shipment);
+
+Permission.hasOne(ShipmentAccess);
+ShipmentAccess.belongsTo(Permission);
+
+Module.hasMany(Heartbeat, {as: "heartBeat"});
+Heartbeat.belongsTo(Module);
+// Shipment.hasOne(Node, {as: 'Node'}) 
 
 sequelize
   // .sync({ force: true }) //for developing purposes, will drop all the exiting table and recreate all the tables
-  .sync()
+  .sync() 
   .then(result => {
     app.listen(3000);
   })

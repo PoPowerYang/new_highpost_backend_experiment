@@ -4,10 +4,8 @@ const sequelize = require('../util/database');
 
 const Components = sequelize.define('components', {
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
         primaryKey: true,
-        allowNull: false,
     },
     name: {
         type: Sequelize.STRING,

@@ -4,10 +4,8 @@ const sequelize = require('../util/database');
 
 const Heartbeat = sequelize.define('heartbeat', {
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
         primaryKey: true,
-        allowNull: false,
     },
     name: {
         type: Sequelize.STRING,

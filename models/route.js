@@ -4,10 +4,8 @@ const sequelize = require('../util/database');
 
 const Route = sequelize.define('route', {
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
         primaryKey: true,
-        allowNull: false,
     }
 });
 

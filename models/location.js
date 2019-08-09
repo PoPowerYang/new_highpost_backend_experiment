@@ -2,12 +2,10 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Coordinates = sequelize.define('coordinates', {
+const Coordinates = sequelize.define('location', {
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
         primaryKey: true,
-        allowNull: false,
     },
     latitude: {
         type: Sequelize.FLOAT,

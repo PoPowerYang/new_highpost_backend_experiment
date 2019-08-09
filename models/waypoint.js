@@ -2,12 +2,10 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const Trip = sequelize.define('trip', {
+const Trip = sequelize.define('waypoint', {
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: Sequelize.UUID,
         primaryKey: true,
-        allowNull: false,
     },
 });
 

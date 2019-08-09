@@ -2,11 +2,11 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const ManifestLocation = sequelize.define('manifest location', {
+const Module = sequelize.define('module', {
     id: {
         type: Sequelize.UUID,
         primaryKey: true,
     },
 });
 
-module.exports = ManifestLocation;
+module.exports = Module;
