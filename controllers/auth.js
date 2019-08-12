@@ -5,6 +5,10 @@ const unique = require('uniqid');
 
 const User = require('../models/user');
 
+/**
+ * the password will be hashed before
+ * storing it in the database using bcrypt
+ */
 exports.signup = async (req, res, next) => {
     try{
         const errors = validationResult(req);
@@ -29,7 +33,7 @@ exports.signup = async (req, res, next) => {
             lastName: lastName,
             phone: phone,
         });
-        res.status(201).json({ message: 'User created!', userId: result.id });
+        res.status(201).json({ message: 'User created!', userId: result });
     } catch (error) {
         if(!error.statusCode) {
             error.statusCode = 500;
@@ -38,6 +42,11 @@ exports.signup = async (req, res, next) => {
     }
 };
 
+/**
+ * login will verify all the information
+ * including email and password and send
+ * back a jwt token to the client.
+ */
 exports.login = async (req, res, next) => {
 
     try{

@@ -1,3 +1,10 @@
+/**
+ * This is a middleware for
+ * verifying token before 
+ * adding anything else to
+ * the database.
+ */
+
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {

@@ -1,11 +1,19 @@
+/**
+ * Author: Yanwei Yang
+ * 
+ * Last Update: 8/12/2019
+ */
+
 const path = require('path');
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
-const errorController = require('./controllers/error');
 const sequelize = require('./util/database');
 
+/**
+ * all the models that are defined using
+ * seqeulize
+ */
 const User = require('./models/user');
 const Addresses = require('./models/addresses');
 const Shipment = require('./models/shipment');
@@ -26,6 +34,9 @@ const Heartbeat = require('./models/heartbeat');
 
 const app = express();
 
+/**
+ * all the routes are imported here
+ */
 const shipmentRoutes = require('./routes/shipment-route');
 const utilRoutes = require('./routes/util-route');
 const authRoutes = require('./routes/auth');
@@ -52,7 +63,7 @@ app.use('/auth', authRoutes);
 app.use('/util', utilRoutes);
 
 /*
-  user for any error catch
+  use for any error catch
   updated at 8/7/2019
   by Yanwei Yang
 */
@@ -74,67 +85,104 @@ app.use((error, req, res, next) => {
   by Yanwei Yang
 */ 
 
-User.belongsTo(Addresses);
+/**
+ * the many-to-many relationships between addresses and users
+ * 
+ * This will add methods getUsers, setUsers, addUser,addUsers to Addresses, 
+ * and getAddresses, setAddresses, addAddress, and addAddresses to User.
+ */
+Addresses.belongsToMany(User, { through: 'UserAddress'})
+User.belongsToMany(Addresses, { through: 'UserAddress'});
 
-User.belongsToMany(Shipment, { through: 'UserShipment'});//This will add methods getUsers, setUsers, addUser,addUsers to Shipment
-Shipment.belongsToMany(User, { through: 'UserShipment'}); //This will add methods getShipments, setShipments, addShipment,adShipments to User
+/**
+ * the many-to-many relationships between shipments and users
+ * 
+ * This will add methods getUsers, setUsers, addUser,addUsers to shipment, 
+ * and getShipments, setShipments, addShipments, and addShipments to User.
+ * 
+ * through keyword is required for belongsToMany, and adds a table
+ * named, 'UserShipment' references to both User and Shipment model
+ */
+User.belongsToMany(Shipment, { through: 'UserShipment'});
+Shipment.belongsToMany(User, { through: 'UserShipment'});
 
-
-Shipment.belongsTo(Route); //belongs to add getShipment, setShipment to Route model
-Route.hasOne(Shipment);
+/**
+ * the following code adds the one-to-one relationships
+ * between two models
+ * 
+ * Sample:
+ * Source.hasOne(Target, {as: 'SourceTaget});
+ * Target.belongsTo(Source);
+ * 
+ * The code above will add a foreign key, which 
+ * is named after the 'as' keyword, SourceTargetId
+ * to Target. It also adds accessors such as 
+ *      existingSource.getSourceTarget(); 
+ *    & existingSource.setSourceTarget(target);
+ * 
+ * note: Source must be found using
+ *      const sourceId = id of the source, id of the source could be passed in using body or params
+ *      const existingSource = Source.findByPk(sourceId);
+ * before using the accessors.
+ */
+Shipment.belongsTo(Route);
+Route.hasOne(Shipment, {as: 'ShipmentRoute'});
 
 Shipment.belongsTo(PurchaseOrder);
-PurchaseOrder.hasOne(Shipment);
+PurchaseOrder.hasOne(Shipment, {as: 'ShipmentPurchaseOrder'});
 
 Shipment.belongsTo(ServiceType);
-ServiceType.hasOne(Shipment);
+ServiceType.hasOne(Shipment, {as: 'ShipmentServiceType'});
 
 Shipment.belongsTo(Module);
-Module.hasOne(Shipment);
+Module.hasOne(Shipment, {as: 'ShipmentModule'});
 
-location.hasOne(Addresses);
+location.hasOne(Addresses, {as: 'addressLocation'});
 Addresses.belongsTo(location);
 
+Route.belongsTo(Addresses);
+Addresses.hasOne(Route, {as: 'RouteStartAddress'});
 
-Route.belongsTo(Addresses, {as: 'startAddress'});
-Addresses.hasOne(Route, {as: 'startAddress'});
-
-Route.belongsTo(Addresses, {as: 'endAddress'});
-Addresses.hasOne(Route, {as: 'endAddress'});
+Route.belongsTo(Addresses);
+Addresses.hasOne(Route, {as: 'RouteEndAddress'});
 
 Content.belongsTo(Shipment);
-Shipment.hasOne(Content);
+Shipment.hasOne(Content, {as: 'ShipmentContent'});
 
 Component.belongsTo(Module);
-Module.hasMany(Component, {as: 'Components'});
+Module.hasMany(Component, {as: 'ModuleComponents'});
 
 ManifestLocation.belongsTo(location);
-location.hasOne(ManifestLocation);
+location.hasOne(ManifestLocation, {as: 'ManifestLocation'});
 
 ManifestLocation.belongsTo(Courier);
-Courier.hasOne(ManifestLocation);
+Courier.hasOne(ManifestLocation, {as: 'Manifestcourier'});
 
 ShipmentStatus.belongsTo(ShipmentState);
-ShipmentState.hasOne(ShipmentStatus);
+ShipmentState.hasOne(ShipmentStatus, {as: 'statusstate'});
 
 ShipmentStatus.belongsTo(Shipment);
-Shipment.hasOne(ShipmentStatus);
+Shipment.hasOne(ShipmentStatus, {as: 'statusshipment'});
 
 ShipmentStatus.belongsTo(Courier);
-Courier.hasOne(ShipmentStatus);
+Courier.hasOne(ShipmentStatus, {as: 'statuscourier'});
 
-Shipment.hasOne(ShipmentAccess);
+Shipment.hasOne(ShipmentAccess, {as: 'ShipmentAccess'});
 ShipmentAccess.belongsTo(Shipment);
 
-Permission.hasOne(ShipmentAccess);
+Permission.hasOne(ShipmentAccess, {as: 'PermissionShipmentAccess'});
 ShipmentAccess.belongsTo(Permission);
 
-Module.hasMany(Heartbeat, {as: "heartBeat"});
+Module.hasMany(Heartbeat, {as: "ModuleHeartBeat"});
 Heartbeat.belongsTo(Module);
-// Shipment.hasOne(Node, {as: 'Node'}) 
 
 sequelize
-  // .sync({ force: true }) //for developing purposes, will drop all the exiting table and recreate all the tables
+  /**
+   * .sync({ force: true}) will drop 
+   * and recreate all the tables in the
+   * database. 
+   */
+  // .sync({ force: true })
   .sync() 
   .then(result => {
     const server = app.listen(3000);
