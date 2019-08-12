@@ -137,7 +137,11 @@ sequelize
   // .sync({ force: true }) //for developing purposes, will drop all the exiting table and recreate all the tables
   .sync() 
   .then(result => {
-    app.listen(3000);
+    const server = app.listen(3000);
+    const io = require('socket.io')(server);
+    io.on('connection', socket => {
+      console.log('Client connected')
+    })
   })
   .catch(err => {
     console.log(err);

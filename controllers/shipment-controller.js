@@ -30,7 +30,7 @@ exports.getShipments = async (req, res, next) => {
             error.statusCode = 422;
             throw error;
         }
-        const user = await User.findByPk(req.userId);
+        const user = await User.findByPk(req.body.userId);
         const shipments = await user.getShipments();
         if(!shipments) {
             const error = new Error('Could not find shipments');
@@ -50,14 +50,23 @@ exports.getShipments = async (req, res, next) => {
 exports.getSingleShipment = async (req, res, next) => {
     try{
         const shipId = req.params.shipmentId;
-        const errors = validationResult(req);
-        if(!errors.isEmpty()) {
-            const error = new Error('Validation failed, entered data is incorrect.');
-            error.statusCode = 422;
+        
+        const user = await User.findByPk(req.userId);
+
+        if(!user) {
+            const error = new Error('Could not find user');
+            error.statusCode = 404;
             throw error;
         }
-        const user = await User.findByPk(req.userId);
+
         const shipment = await user.getShipments({where: {id: shipId}});
+
+        if(!shipment) {
+            const error = new Error('Could not find shipment');
+            error.statusCode = 404;
+            throw error;
+        }
+
         res.status(200).json({ message:'Shipment found!', shipment: shipment });
     } catch (error) {
         if (!error.statusCode) {
